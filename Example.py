@@ -23,12 +23,13 @@ RealEstate = RealEstate[(RealEstate['price'] >= Q1 - 1.5*IQR) & (RealEstate['pri
 
 X=RealEstate.drop(columns=['price'])
 y=RealEstate[['price']]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 train_data=X_train.join(y_train)
 # X,y,train_data
 
 train_data['bed']=np.log(train_data['bed']+1)
 train_data['bath']=np.log(train_data['bath']+1)
+
 train_data['house_size']=np.log(train_data['house_size']+1)
 
 
@@ -42,7 +43,7 @@ scaler=StandardScaler()
 
 
 
-X_trainer=train_data.drop(columns=['price','West Virginia'])
+X_trainer=train_data.drop(columns=['price'])
 X_train_scaled=scaler.fit_transform(X_trainer)
 y_trainer=train_data['price']
 print(X_trainer)
@@ -50,12 +51,24 @@ model = LinearRegression()
 model.fit(X_trainer,y_trainer)
 
 
-X_test=X_test.join(pd.get_dummies(X_test.state).astype(int)).drop(['state','West Virginia'],axis=1)
+
 test_data=X_test.join(y_test)
+
 test_data['bed']=np.log(test_data['bed']+1)
 test_data['bath']=np.log(test_data['bath']+1)
 test_data['house_size']=np.log(test_data['house_size']+1)
+test_data=test_data.join(pd.get_dummies(test_data.state).astype(int)).drop(['state'],axis=1)
+X_test=test_data.drop(['price'],axis=1)
+X_test['Wyoming']=0
+y_test=test_data['price']
 print(X_test)
 
-score=model.score(X_test,y_test)
-print(score)
+
+# print(model.score(X_test,y_test))
+
+from sklearn.ensemble import RandomForestRegressor
+
+forest= RandomForestRegressor()
+forest.fit(X_trainer,y_trainer)
+
+print(forest.score(X_test,y_test))
